@@ -26,6 +26,9 @@ struct Args {
     /// [Optional] If you have "deprecated" repos and these have a special prefix, you can exclude them by providing this prefix here.
     #[arg(long)]
     ignore_repo_prefix: Option<String>,
+    /// [Optional] Saves the package version report to a file at the specified location instead of printing it to the console.
+    #[arg(long)]
+    out_file_path: Option<String>,
 }
 
 #[tokio::main]
@@ -38,6 +41,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let package = args.package;
     let project = args.project;
     let ignore_repo_prefix = args.ignore_repo_prefix;
+    let out_file_path = args.out_file_path;
 
     let client = BitbucketClient::new(&args.base_url, &token);
 
@@ -100,7 +104,11 @@ async fn main() -> Result<(), anyhow::Error> {
         println!("Done processing files from repo: {}", &repo.slug);
     }
 
-    println!("{}", report.to_string());
+    if let Some(out_file_path) = out_file_path {
+        std::fs::write(out_file_path, report.to_string())?;
+    } else {
+        println!("{}", report.to_string());
+    }
 
     Ok(())
 }

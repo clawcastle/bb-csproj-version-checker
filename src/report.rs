@@ -17,7 +17,7 @@ impl ToString for PackageVersionReport {
             .group_by(|r| r.repo_name.clone());
 
         for (repo_slug, group) in grouped_by_repo.into_iter() {
-            let repo_title_line = format!("----- {} -----\n", &repo_slug.to_uppercase());
+            let repo_title_line = format!("## {}\n", &repo_slug.to_uppercase());
             s += &repo_title_line;
             s += "\n";
 
@@ -41,7 +41,7 @@ impl ToString for PackageVersionReport {
                     .replace(".csproj", "");
 
                 s += &format!(
-                    "Repository: {}. Project name: {}. {} package version: {}.\n\n",
+                    "Repository: {}. Project name: {}. {} package version: {}.\n",
                     p.repo_name,
                     project_name,
                     p.package_reference.package_name,
@@ -50,6 +50,7 @@ impl ToString for PackageVersionReport {
             }
         }
 
+        s += "\n";
         s
     }
 }
