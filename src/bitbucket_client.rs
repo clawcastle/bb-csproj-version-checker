@@ -64,17 +64,12 @@ impl<'a> BitbucketClient<'a> {
             "https://{}/rest/api/latest/projects/{}/repos/{}/files/?limit=1000",
             &self.base_url, &project_key, &repo_slug
         );
-        let mut start = 0;
+        let mut start_page = 0;
 
         let mut file_paths: Vec<String> = Vec::new();
 
         loop {
-            println!(
-                "Getting file paths for repo: {}. Fetched {} files so far.",
-                &repo_slug,
-                &file_paths.len()
-            );
-            let url = format!("{}&start={}", &get_repo_files_url, start);
+            let url = format!("{}&start={}", &get_repo_files_url, start_page);
 
             let response: RepoFilesResponse = self
                 .client
@@ -95,11 +90,11 @@ impl<'a> BitbucketClient<'a> {
                 file_paths.push(file.clone());
             }
 
-            start += 1;
-
             if response.is_last_page {
                 break;
             }
+
+            start_page += 1;
         }
 
         Ok(file_paths)

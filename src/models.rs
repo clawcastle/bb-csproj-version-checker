@@ -115,3 +115,17 @@ pub struct RepoPackageReference {
     pub package_reference: PackageReference,
     pub csproj_file_name: String,
 }
+
+impl RepoPackageReference {
+    pub fn new(
+        repo_name: String,
+        csproj_file_name: String,
+        package_reference: PackageReference,
+    ) -> Self {
+        Self {
+            repo_name,
+            package_reference,
+            csproj_file_name,
+        }
+    }
+}

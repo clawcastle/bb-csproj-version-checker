@@ -23,7 +23,7 @@ struct Args {
     /// HTTP access token for Bitbucket.
     #[arg(long)]
     token: String,
-    /// If you have "deprecated" repos and these have a special prefix, you can exclude them by providing this prefix here.
+    /// [Optional] If you have "deprecated" repos and these have a special prefix, you can exclude them by providing this prefix here.
     #[arg(long)]
     ignore_repo_prefix: Option<String>,
 }
@@ -80,11 +80,13 @@ async fn main() -> Result<(), anyhow::Error> {
                 .lines
                 .iter()
                 .filter_map(|line| PackageReference::try_from(line.clone()).ok())
-                .filter(|package_ref| package_ref.package_name == package)
-                .map(|package_ref| RepoPackageReference {
-                    repo_name: repo.slug.to_string(),
-                    package_reference: package_ref,
-                    csproj_file_name: file.name.clone(),
+                .filter(|package_reference| package_reference.package_name == package)
+                .map(|package_reference| {
+                    RepoPackageReference::new(
+                        repo.slug.to_string(),
+                        file.name.clone(),
+                        package_reference,
+                    )
                 })
                 .collect();
 
@@ -94,6 +96,8 @@ async fn main() -> Result<(), anyhow::Error> {
         report
             .repo_package_references
             .extend_from_slice(&repo_package_references);
+
+        println!("Done processing files from repo: {}", &repo.slug);
     }
 
     println!("{}", report.to_string());
