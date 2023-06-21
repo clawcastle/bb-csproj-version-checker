@@ -3,10 +3,17 @@ use crate::{
     models::{PackageReference, RepoFile, RepoPackageReference},
     report::PackageVersionReport,
 };
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 mod bitbucket_client;
 mod models;
 mod report;
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+enum OutputKind {
+    Console,
+    Txt,
+    Md,
+}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -23,12 +30,15 @@ struct Args {
     /// HTTP access token for Bitbucket.
     #[arg(long)]
     token: String,
-    /// [Optional] If you have "deprecated" repos and these have a special prefix, you can exclude them by providing this prefix here.
+    /// [Optional] Specifies whether to print the output to the console, or save it to a .txt or .md file.
+    #[arg(long, value_enum, default_value_t=OutputKind::Console)]
+    output_kind: OutputKind,
+    /// [Optional] If you have repos you wish to ignore that share a common prefix, you can exclude them by specifying the prefix here.
     #[arg(long)]
     ignore_repo_prefix: Option<String>,
-    /// [Optional] Saves the package version report to a file at the specified location instead of printing it to the console.
+    /// [Optional] Specifies the name of the file to save the output to. Ignored if 'output-kind' is 'console'
     #[arg(long)]
-    out_file_path: Option<String>,
+    output_file_name: Option<String>,
 }
 
 #[tokio::main]
@@ -41,7 +51,10 @@ async fn main() -> Result<(), anyhow::Error> {
     let package = args.package;
     let project = args.project;
     let ignore_repo_prefix = args.ignore_repo_prefix;
-    let out_file_path = args.out_file_path;
+    let output_kind = args.output_kind;
+    let output_file_name = args
+        .output_file_name
+        .unwrap_or("package-version-report".to_string());
 
     let client = BitbucketClient::new(&args.base_url, &token);
 
@@ -104,10 +117,14 @@ async fn main() -> Result<(), anyhow::Error> {
         println!("Done processing files from repo: {}", &repo.slug);
     }
 
-    if let Some(out_file_path) = out_file_path {
-        std::fs::write(out_file_path, report.to_string())?;
-    } else {
-        println!("{}", report.to_string());
+    match output_kind {
+        OutputKind::Console => println!("{}", report.to_string()),
+        OutputKind::Txt => {
+            std::fs::write(format!("{output_file_name}.txt"), report.to_string())?;
+        }
+        OutputKind::Md => {
+            std::fs::write(format!("{output_file_name}.md"), report.to_string())?;
+        }
     }
 
     Ok(())
