@@ -50,7 +50,7 @@ impl ToString for PackageVersionReport {
             }
         }
 
-        s += "\n";
+        s += "\n\n";
         s
     }
 }
